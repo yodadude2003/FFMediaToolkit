@@ -52,6 +52,29 @@
         /// </summary>
         public void DiscardBufferedData() => Stream.DiscardBufferedData();
 
+        /// <summary>
+        /// Seeks the stream to the specified timestamp.
+        /// </summary>
+        /// <param name="ts">The timestamp.</param>
+        public void SeekTo(long ts)
+        {
+            var currentTs = Stream.RecentlyDecodedFrame.PresentationTimestamp;
+            if (ts < currentTs || ts >= currentTs + Threshold)
+            {
+                Stream.OwnerFile.SeekFile(ts, Info.Index);
+            }
+        }
+
+        /// <summary>
+        /// Seeks the stream to the specified position.
+        /// </summary>
+        /// <param name="time">The desired target position.</param>
+        public void SeekTo(TimeSpan time)
+        {
+            DiscardBufferedData();
+            SeekTo(time.ToTimestamp(Info.TimeBase));
+        }
+
         /// <inheritdoc/>
         public virtual void Dispose()
         {
