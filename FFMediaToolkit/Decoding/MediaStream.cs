@@ -58,11 +58,15 @@
         /// <param name="ts">The timestamp.</param>
         public void SeekTo(long ts)
         {
+            DiscardBufferedData();
+
             var currentTs = Stream.RecentlyDecodedFrame.PresentationTimestamp;
             if (ts < currentTs || ts >= currentTs + Threshold)
             {
                 Stream.OwnerFile.SeekFile(ts, Info.Index);
             }
+
+            Stream.SkipFrames(ts);
         }
 
         /// <summary>
@@ -71,7 +75,6 @@
         /// <param name="time">The desired target position.</param>
         public void SeekTo(TimeSpan time)
         {
-            DiscardBufferedData();
             SeekTo(time.ToTimestamp(Info.TimeBase));
         }
 
@@ -111,12 +114,7 @@
             }
             else if (ts != frame.PresentationTimestamp)
             {
-                if (ts < frame.PresentationTimestamp || ts >= frame.PresentationTimestamp + Threshold)
-                {
-                    Stream.OwnerFile.SeekFile(ts, Info.Index);
-                }
-
-                Stream.SkipFrames(ts);
+                SeekTo(ts);
             }
 
             return Stream.RecentlyDecodedFrame;
