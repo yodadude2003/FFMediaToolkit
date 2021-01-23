@@ -33,8 +33,6 @@
                 throw new InvalidOperationException($"The {codecId} encoder doesn't support video!");
 
             var videoStream = ffmpeg.avformat_new_stream(container.Pointer, codec);
-            videoStream->time_base = config.TimeBase;
-            videoStream->r_frame_rate = config.FramerateRational;
 
             var codecContext = videoStream->codec;
             codecContext->codec_id = codecId;
@@ -43,8 +41,8 @@
             codecContext->width = config.VideoWidth;
             codecContext->height = config.VideoHeight;
 
-            codecContext->time_base = videoStream->time_base;
-            codecContext->framerate = videoStream->r_frame_rate;
+            codecContext->time_base = config.TimeBase;
+            codecContext->framerate = config.FramerateRational;
             codecContext->gop_size = config.KeyframeRate;
             codecContext->pix_fmt = (AVPixelFormat)config.VideoFormat;
 
@@ -74,6 +72,10 @@
             ffmpeg.avcodec_open2(codecContext, codec, &ptr);
 
             dict.Update(ptr);
+
+            videoStream->time_base = config.TimeBase;
+            videoStream->avg_frame_rate = config.FramerateRational;
+            videoStream->r_frame_rate = config.FramerateRational;
 
             return new OutputStream<VideoFrame>(videoStream, container);
         }
